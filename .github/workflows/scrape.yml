@@ -48,6 +48,21 @@ on:
         required: false
         default: '0'
         type: string
+      source_account:
+        description: 'Filter by specific account (e.g. @my_mad89)'
+        required: false
+        default: ''
+        type: string
+      sort_by:
+        description: 'Sort by: default, newest, oldest, likes, retweets, engagement, views'
+        required: false
+        default: 'default'
+        type: string
+      filter_replies:
+        description: 'Post type filter: all, posts, replies'
+        required: false
+        default: 'all'
+        type: string
 
 jobs:
   scrape:
@@ -58,16 +73,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-      - run: npm ci
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-      - run: npx playwright install chromium
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
+      - run: npm install
       - name: Decode auth cookies
         run: echo "$X_STATE" | base64 -d > state.json
         env:
@@ -83,7 +89,15 @@ jobs:
           MEDIA_ONLY: ${{ github.event.inputs.media_only || 'false' }}
           RAW_QUERY: ${{ github.event.inputs.raw_query || '' }}
           KEY_HASH: ${{ secrets.KEY_HASH }}
+          SEARCH_QUERY: ${{ github.event.inputs.target || '' }}
           MIN_LIKES: ${{ github.event.inputs.min_likes || '0' }}
           MIN_RETWEETS: ${{ github.event.inputs.min_retweets || '0' }}
           MIN_REPLIES: ${{ github.event.inputs.min_replies || '0' }}
           MIN_VIEWS: ${{ github.event.inputs.min_views || '0' }}
+          SOURCE_ACCOUNT: ${{ github.event.inputs.source_account || '' }}
+          SORT_BY: ${{ github.event.inputs.sort_by || 'default' }}
+          FILTER_REPLIES: ${{ github.event.inputs.filter_replies || 'all' }}
+          PROXY_HOST: ${{ secrets.PROXY_HOST }}
+          PROXY_PORT: ${{ secrets.PROXY_PORT }}
+          PROXY_USER: ${{ secrets.PROXY_USER }}
+          PROXY_PASS: ${{ secrets.PROXY_PASS }}
